@@ -39,7 +39,7 @@ matplotlib: 3.10.0
 
 MIT License
 
-Copyright (c) [year] [fullname]
+Copyright (c) [2025] [Nathaniel Paul Brand]
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -399,7 +399,7 @@ class lcd():
     
     """
 
-    def __init__(self, geo_class, frequency):
+    def __init__(self, geo_class, frequency, tolerance = 0.0000001):
         """
         Generate the LCD geometry for one segment of a face of an icosahedron, given a class and frequency.
         """
@@ -410,6 +410,7 @@ class lcd():
         #    raise ValueError('Bad arguments for geodesic class or frequency. for geo_class = 2, frequency = 2*n (even number)')
         self.geo_class = geo_class
         self.frequency = int(frequency)
+        self.tolerance = tolerance
         self.A_rad = np.pi/5
         self.B_rad = np.pi/3
         self.C_rad = np.pi/2
@@ -718,7 +719,7 @@ class lcd():
                     np.array([0, 0, 0]), np.array([0, 0, 1]), 2*(i+1)*np.pi/3)).tolist())
             self.points_lcd_list.extend(np.array(
                 (self.points_lcd_list)@reflection_matrix_3d([0, 0, 0], [1, 0, 0])).tolist())
-            for point in unique_points(np.array(self.points_lcd_list), 0.05):
+            for point in unique_points(np.array(self.points_lcd_list), self.tolerance):
                 self.points_lcd_sphere.append(
                     normalize([point[0], point[1], point[2]]))
             self.points_lcd_sphere = [[p[0], p[1], p[2], 1]
@@ -759,7 +760,7 @@ class geodesic():
     edge_lengths #list of lengths of edges of the dome. Useful when deciding which subdivision method to use
     """
 
-    def __init__(self, geo_class, frequency, radius, method="radial", fraction=1, rotation=([0, 0, 0])):
+    def __init__(self, geo_class, frequency, radius, method="radial", fraction=1, rotation=([0, 0, 0]), tolerance=0.0000001):
         """
         
         class options are 1 or 2
@@ -769,7 +770,7 @@ class geodesic():
         rotation is sequentially applied [x, y, z] in radians
         For Triad symmetry use rotation = [np.pi-np.arccos(np.sqrt(5)/3)/2,0,0]
         For Cross symmetry use rotation = [0,0,0]
-        For Pentad symmetry use rotation = [[np.arctan(2)/2-np.pi/2,0,0],0,0]   
+        For Pentad symmetry use rotation = [np.arctan(2)/2-np.pi/2,0,0]   
 
         """
         if (frequency < 1 or geo_class not in [1, 2]):
@@ -786,8 +787,13 @@ class geodesic():
         self.method = method
         self.fraction = fraction
         self.rotation = rotation
-        self.lcd = lcd(self.geo_class, self.frequency)
-        self.tolerance = .00000001
+        #since we're using floating point math, a tolerance is needed
+        #to determin whether to consider two points as identical
+        #set to appx 0.1 to find the average vertices on radial projection
+        self.tolerance = tolerance
+        
+        self.lcd = lcd(self.geo_class, self.frequency, self.tolerance)
+        
         self.generate()
         self.get_edge_lengths()
 
@@ -826,9 +832,9 @@ class geodesic():
         # segments = segments + ((np.array(segments)@reflection_matrix_3d([0,0,0],self.lcd.icosa_vertex_y))@rotation_matrix_3d_about_line([0,0,0],self.lcd.icosa_vertex_y, np.pi/5)).tolist()
 
         if (self.method == "radial"):
-            sphere_points = unique_points(np.array(segments), .1)
+            sphere_points = unique_points(np.array(segments), self.tolerance)
         else:
-            sphere_points = unique_points(np.array(segments), 0.000001)
+            sphere_points = unique_points(np.array(segments), self.tolerance)
         sphere_points = (sphere_points@rotation_matrix_3d_about_line([0, 0, 0], [0, 0, 1], self.rotation[2]))@rotation_matrix_3d_about_line(
             [0, 0, 0], [0, 1, 0], self.rotation[1])@rotation_matrix_3d_about_line([0, 0, 0], [1, 0, 0], self.rotation[0])
         sphere_points = sphere_points@scaling_matrix(self.radius)
