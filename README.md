@@ -97,3 +97,6 @@ g = geodesic(geo_class=2, frequency=6, radius=10, method="radial",
 geo.plot_3d_line_segments(np.array(g.dome_edges), 90, 90)
 
 ```
+
+#Example Usage 4: Truss analysis of loaded geodesic dome
+See GeoTruss.py
