@@ -40,7 +40,9 @@ matplotlib: 3.10.0
 
 MIT License
 
-Example Usage:
+#Example Usage:
+'''
+
 import icosa_geodesic as geo
 import numpy as np
 
@@ -55,3 +57,5 @@ print(g.dome_edge_indices)
 
 # Plot the dome edges.
 geo.plot_3d_line_segments(np.array(g.dome_edges), 90, 90) 
+
+'''
